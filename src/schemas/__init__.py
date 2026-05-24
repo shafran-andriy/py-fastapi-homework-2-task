@@ -7,5 +7,6 @@ from schemas.movies import (
     MovieDetailResponseSchema,
     MovieListResponseSchema,
     MovieListItemSchema,
+    MovieUpdateResponseSchema,
     MovieUpdateSchema,
 )

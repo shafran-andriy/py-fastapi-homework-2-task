@@ -15,6 +15,7 @@ from database.models import (CountryModel,
 from schemas.movies import (MovieListResponseSchema,
                             MovieDetailResponseSchema,
                             MovieCreateSchema,
+                            MovieUpdateResponseSchema,
                             MovieUpdateSchema
                             )
 
@@ -24,6 +25,11 @@ router = APIRouter()
 def validate_date_not_too_far_in_future(value: datetime.date) -> None:
     max_allowed_date = datetime.date.today() + datetime.timedelta(days=365)
     if value > max_allowed_date:
+        raise HTTPException(status_code=400, detail="Invalid input data.")
+
+
+def validate_country_alpha3_code(value: str) -> None:
+    if len(value) != 3 or not value.isalpha() or value != value.upper():
         raise HTTPException(status_code=400, detail="Invalid input data.")
 
 
@@ -127,6 +133,7 @@ async def create_movie(
     db: AsyncSession = Depends(get_db),
 ) -> MovieDetailResponseSchema:
     validate_date_not_too_far_in_future(movie_data.date)
+    validate_country_alpha3_code(movie_data.country)
 
     duplicate_result = await db.execute(
         select(MovieModel).where(
@@ -208,12 +215,15 @@ async def delete_movie(
     await db.commit()
 
 
-@router.patch("/movies/{movie_id}/")
+@router.patch(
+    "/movies/{movie_id}/",
+    response_model=MovieUpdateResponseSchema,
+)
 async def update_movie(
     movie_id: int,
     movie_data: MovieUpdateSchema,
     db: AsyncSession = Depends(get_db),
-) -> dict[str, str]:
+) -> MovieUpdateResponseSchema:
     movie = await db.get(MovieModel, movie_id)
 
     if movie is None:
@@ -235,4 +245,4 @@ async def update_movie(
         await db.rollback()
         raise HTTPException(status_code=400, detail="Invalid input data.")
 
-    return {"detail": "Movie updated successfully."}
+    return MovieUpdateResponseSchema(detail="Movie updated successfully.")
