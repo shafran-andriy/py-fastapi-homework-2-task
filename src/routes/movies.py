@@ -107,7 +107,8 @@ async def get_movies(
     )
 
 
-@router.get("/movies/{movie_id}/", response_model=MovieDetailResponseSchema)
+@router.get("/movies/{movie_id}/",
+            response_model=MovieDetailResponseSchema)
 async def get_movie_by_id(
     movie_id: int,
     db: AsyncSession = Depends(get_db),
@@ -192,7 +193,8 @@ async def create_movie(
         await db.commit()
     except IntegrityError:
         await db.rollback()
-        raise HTTPException(status_code=400, detail="Invalid input data.")
+        raise HTTPException(status_code=400,
+                            detail="Invalid input data.")
 
     created_movie = await get_movie_with_relations(db, movie.id)
     return MovieDetailResponseSchema.model_validate(created_movie)
